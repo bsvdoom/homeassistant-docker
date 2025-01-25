@@ -1,1 +1,4 @@
-.config/*
+ha/config/*
+mqtt/data/*
+mqtt/config/pwfile
+mqtt/log

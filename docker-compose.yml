@@ -3,13 +3,30 @@ services:
     container_name: homeassistant
     image: "ghcr.io/home-assistant/home-assistant:stable"
     volumes:
-      - ./config:/config
+      - ./ha/config:/config
       - /etc/localtime:/etc/localtime:ro
       - /run/dbus:/run/dbus:ro
     restart: unless-stopped
     privileged: true
     environment:
       MY_TIME_ZONE: Europe/Budapest
-#    network_mode: host
     ports:
       - "8123:8123"
+  mosquitto:
+    image: eclipse-mosquitto
+    hostname: mosquitto
+    container_name: mosquitto
+    volumes:
+      - ./mqtt/config:/mosquitto/config:rw
+      - ./mqtt/data:/mosquitto/data:rw
+      - ./mqtt/log:/mosquitto/log:rw
+    restart: unless-stopped
+    ports:
+      - 1883:1883
+      - 9001:9001
+    stdin_open: true
+    tty: true
+
+networks:
+  default:
+    name: homeassistant-network
