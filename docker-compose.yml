@@ -10,8 +10,8 @@ services:
     privileged: true
     environment:
       MY_TIME_ZONE: Europe/Budapest
-    ports:
-      - "8123:8123"
+    network_mode: host
+
   mosquitto:
     image: eclipse-mosquitto
     hostname: mosquitto
@@ -21,12 +21,6 @@ services:
       - ./mqtt/data:/mosquitto/data:rw
       - ./mqtt/log:/mosquitto/log:rw
     restart: unless-stopped
-    ports:
-      - 1883:1883
-      - 9001:9001
     stdin_open: true
     tty: true
-
-networks:
-  default:
-    name: homeassistant-network
+    network_mode: host
