@@ -1,4 +1,5 @@
-ha/config/*
+homeassistant/config/*
 mqtt/data/*
 mqtt/config/pwfile
 mqtt/log
+mariadb/*
