@@ -4,16 +4,19 @@ services:
     container_name: mariadb
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: strongRootPassword12345
-      MYSQL_DATABASE: homeassistant
-      MYSQL_USER: homeassistant
-      MYSQL_PASSWORD: SoStrongMyyPw321
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env to a unique non-empty password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env to a unique non-empty database}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in .env to a unique non-empty user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env to a unique non-empty password}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./mariadb:/var/lib/mysql
+      - ./mariadb-config/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
     network_mode: host
 
   homeassistant:
+    depends_on:
+      - mariadb
     container_name: homeassistant
     image: "ghcr.io/home-assistant/home-assistant:stable"
     volumes:
@@ -41,3 +44,11 @@ services:
     stdin_open: true
     tty: true
     network_mode: host
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: node-red
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./nodered_data:/data

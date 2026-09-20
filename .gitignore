@@ -3,3 +3,5 @@ mqtt/data/*
 mqtt/config/pwfile
 mqtt/log
 mariadb/*
+.env
+nodered_data/*
