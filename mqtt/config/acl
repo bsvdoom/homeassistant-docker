@@ -1,0 +1,11 @@
+# Trusted automation services need discovery and device-topic access.
+user homeassistant
+topic readwrite #
+
+user nodered
+topic readwrite #
+
+# Other accounts can only access their own device subtree and discovery records.
+pattern readwrite devices/%u/#
+pattern write homeassistant/+/%u/#
+pattern read homeassistant/status

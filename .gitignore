@@ -1,7 +1,16 @@
 homeassistant/config/*
 mqtt/data/*
-mqtt/config/pwfile
+mqtt/config/pwfile*
 mqtt/log
 mariadb/*
 .env
+.env.*
+!.env.example
+backups/
+*.key
+*.pem
+*.p12
+*.pfx
+mqtt/config/tls/
 nodered_data/*
+__pycache__/

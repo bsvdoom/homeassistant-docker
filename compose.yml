@@ -1,8 +1,19 @@
+x-logging: &logging
+  # Avoid persistent container logs on the Raspberry Pi's SD card.
+  driver: none
+
 services:
   mariadb:
-    image: mariadb:11
+    image: mariadb:latest
     container_name: mariadb
     restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env to a unique non-empty password}
       MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env to a unique non-empty database}
@@ -16,39 +27,50 @@ services:
 
   homeassistant:
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     container_name: homeassistant
-    image: "ghcr.io/home-assistant/home-assistant:stable"
+    image: ghcr.io/home-assistant/home-assistant:stable
     volumes:
       - ./homeassistant/config:/config
       - /etc/localtime:/etc/localtime:ro
       - /run/dbus:/run/dbus:ro
     restart: unless-stopped
+    stop_grace_period: 60s
+    logging: *logging
     privileged: true
     environment:
-      MY_TIME_ZONE: Europe/Budapest
+      TZ: Europe/Budapest
     network_mode: host
 
   mosquitto:
-    depends_on:
-      - homeassistant
-    image: eclipse-mosquitto
+    image: eclipse-mosquitto:latest
     hostname: mosquitto
     container_name: mosquitto
     volumes:
-      - ./mqtt/config:/mosquitto/config:rw
+      - ./mqtt/config:/mosquitto/config:ro
       - ./mqtt/data:/mosquitto/data:rw
-      - ./mqtt/log:/mosquitto/log:rw
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
-    stdin_open: true
-    tty: true
+    logging: *logging
     network_mode: host
 
   nodered:
     image: nodered/node-red:latest
     container_name: node-red
     restart: unless-stopped
+    logging: *logging
+    environment:
+      TZ: Europe/Budapest
+      NODE_RED_ADMIN_USER: ${NODE_RED_ADMIN_USER:?Set NODE_RED_ADMIN_USER in .env}
+      NODE_RED_ADMIN_PASSWORD_HASH: ${NODE_RED_ADMIN_PASSWORD_HASH:?Set NODE_RED_ADMIN_PASSWORD_HASH in .env}
+      NODE_RED_CREDENTIAL_SECRET: ${NODE_RED_CREDENTIAL_SECRET:?Set NODE_RED_CREDENTIAL_SECRET in .env}
     network_mode: host
     volumes:
       - ./nodered_data:/data
+      - type: bind
+        source: ./nodered-config/settings.js
+        target: /data/settings.js
+        read_only: true
+        bind:
+          create_host_path: false

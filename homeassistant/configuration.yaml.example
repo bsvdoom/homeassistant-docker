@@ -1,0 +1,3 @@
+default_config:
+
+recorder: !include recorder.yaml

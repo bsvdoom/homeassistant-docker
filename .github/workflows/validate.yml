@@ -1,0 +1,36 @@
+name: Validate release configuration
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Configuration, authentication and TLS checks
+        run: python3 -m unittest discover -s tests -v
+      - name: Shell and JavaScript syntax
+        run: |
+          bash -n scripts/generate-mqtt-tls.sh
+          node --check nodered-config/settings.js
+      - name: Scan working tree for secrets
+        run: >-
+          docker run --rm -v "$PWD:/repo:ro"
+          ghcr.io/aquasecurity/trivy:0.75.0 fs
+          --scanners secret --exit-code 1 /repo
+  image-security:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Reject high and critical image vulnerabilities
+        shell: bash
+        run: |
+          status=0
+          while IFS= read -r image; do
+            docker run --rm ghcr.io/aquasecurity/trivy:0.75.0 image \
+              --image-src remote --scanners vuln --severity HIGH,CRITICAL \
+              --exit-code 1 "$image" || status=1
+          done < <(docker compose config --no-interpolate --images)
+          exit "$status"
